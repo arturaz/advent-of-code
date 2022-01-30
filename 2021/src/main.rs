@@ -1,4 +1,5 @@
 #![allow(dead_code)]
+#![feature(drain_filter)]
 
 use std::fs::File;
 use std::io::{BufRead, BufReader, Lines};
@@ -10,7 +11,7 @@ mod day3;
 mod day4;
 
 fn main() {
-    day4::part1();
+    day4::part2();
 }
 
 pub fn read_lines(path: &str) -> Map<Lines<BufReader<File>>, fn(std::io::Result<String>) -> String> {

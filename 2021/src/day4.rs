@@ -73,9 +73,42 @@ fn determine_winning(input: &Input) -> Option<(&Board, HashSet<u32>, u32)> {
     None
 }
 
+struct WinningBoard {
+    board: Board,
+    numbers: HashSet<u32>,
+    won_at_num: u32
+}
+
+fn filter_winning(mut input: Input) -> Vec<WinningBoard> {
+    let mut marked = HashSet::<u32>::new();
+    let mut winning_boards = Vec::<WinningBoard>::new();
+
+    for num in &input.numbers {
+        marked.insert(*num);
+        let winning_this_number =
+            input.boards.drain_filter(|board| board.check(&marked));
+
+        for board in winning_this_number {
+            winning_boards.push(WinningBoard {
+                board, numbers: marked.clone(), won_at_num: *num
+            });
+        }
+    }
+
+    winning_boards
+}
+
 pub fn part1() {
     let input = read();
     let (board, marked, num) = determine_winning(&input).unwrap();
     let score = board.sum_of_unmarked(&marked) * num;
+    println!("score={}", score)
+}
+
+pub fn part2() {
+    let input = read();
+    let winning_boards = filter_winning(input);
+    let winning_board = winning_boards.last().unwrap();
+    let score = winning_board.board.sum_of_unmarked(&winning_board.numbers) * winning_board.won_at_num;
     println!("score={}", score)
 }
