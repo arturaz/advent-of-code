@@ -15,20 +15,24 @@ impl Vec2 {
 #[derive(Debug)]
 struct Line { from: Vec2, to: Vec2 }
 impl Line {
-    fn coordinates(&self) -> Vec<Vec2> {
+    fn coordinates(&self, include_diagonals: bool) -> Vec<Vec2> {
+        let x_range: Vec<_> =
+            if self.from.x < self.to.x { (self.from.x..(self.to.x + 1)).collect() }
+            else { (self.to.x..(self.from.x + 1)).rev().collect() };
+        let y_range: Vec<_> =
+            if self.from.y < self.to.y { (self.from.y..(self.to.y + 1)).collect() }
+            else { (self.to.y..(self.from.y + 1)).rev().collect() };
         if self.from.x == self.to.x {
-            let range =
-                if self.from.y < self.to.y { self.from.y..(self.to.y + 1) }
-                else { self.to.y..(self.from.y + 1) };
             let x = self.from.x;
-            range.map(|y| Vec2::new(x, y) ).collect()
+            y_range.iter().map(|y| Vec2::new(x, *y) ).collect()
         }
         else if self.from.y == self.to.y {
-            let range =
-                if self.from.x < self.to.x { self.from.x..(self.to.x + 1) }
-                else { self.to.x..(self.from.x + 1) };
             let y = self.from.y;
-            range.map(|x| Vec2::new(x, y) ).collect()
+            x_range.iter().map(|x| Vec2::new(*x, y) ).collect()
+        }
+        else if include_diagonals {
+            x_range.iter().zip(y_range.iter())
+                .map(|(x, y)| Vec2::new(*x, *y) ).collect()
         }
         else {
             Vec::new()
@@ -64,11 +68,11 @@ fn print(map: &HashMap<Vec2, u32>) {
     }
 }
 
-pub fn part1() {
+fn run(include_diagonals: bool) {
     let mut map = HashMap::<Vec2, u32>::new();
     for line in read() {
         // println!("{:?}", line);
-        for point in line.coordinates() {
+        for point in line.coordinates(include_diagonals) {
             // println!("{:?}", point);
             let entry = map.entry(point).or_insert(0);
             *entry += 1;
@@ -78,4 +82,12 @@ pub fn part1() {
 
     let count = map.values().filter(|cnt| **cnt > 1).count();
     println!("count={}", count);
+}
+
+pub fn part1() {
+    run(false);
+}
+
+pub fn part2() {
+    run(true);
 }
