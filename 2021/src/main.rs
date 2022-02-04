@@ -3,6 +3,8 @@
 #![feature(drain_filter)]
 #![feature(int_abs_diff)]
 
+extern crate alloc;
+
 use std::fmt::{Debug, Display};
 use std::fs::File;
 use std::io::{BufRead, BufReader, Lines};
@@ -21,7 +23,7 @@ mod day7;
 mod day8;
 
 fn main() {
-    day8::part1();
+    day8::part2();
 }
 
 pub fn read_lines(path: &str) -> Map<Lines<BufReader<File>>, fn(std::io::Result<String>) -> String> {
