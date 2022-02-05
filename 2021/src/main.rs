@@ -5,6 +5,7 @@
 #![feature(is_some_with)]
 
 extern crate alloc;
+extern crate core;
 
 use std::fmt::{Debug, Display};
 use std::fs::File;
@@ -25,7 +26,7 @@ mod day8;
 mod day9;
 
 fn main() {
-    day9::part1();
+    day9::part2();
 }
 
 pub fn read_lines(path: &str) -> Map<Lines<BufReader<File>>, fn(std::io::Result<String>) -> String> {

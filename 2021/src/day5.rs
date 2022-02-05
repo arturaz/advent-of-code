@@ -1,14 +1,32 @@
+use core::fmt::{Display, Formatter};
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::{BufReader, Lines};
 use std::iter::Map;
 use crate::read_lines;
 
-#[derive(Eq, PartialEq, Hash, Debug)]
-struct Vec2 { x: u32, y: u32 }
+#[derive(Eq, PartialEq, Hash, Debug, Copy, Clone)]
+pub struct Vec2 { pub x: usize, pub y: usize }
 impl Vec2 {
-    fn new(x: u32, y: u32) -> Self {
+    pub fn new(x: usize, y: usize) -> Self {
         Vec2 { x, y }
+    }
+
+    pub fn x_sub1(&self) -> Option<Self> {
+        self.x.checked_sub(1).map(|x| Self::new(x, self.y))
+    }
+
+    pub fn x_plus1(&self) -> Self { Self::new(self.x + 1, self.y) }
+
+    pub fn y_sub1(&self) -> Option<Self> {
+        self.y.checked_sub(1).map(|y| Self::new(self.x, y))
+    }
+
+    pub fn y_plus1(&self) -> Self { Self::new(self.x, self.y + 1) }
+}
+impl Display for Vec2 {
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+        f.write_fmt(format_args!("({},{})", self.x, self.y))
     }
 }
 
@@ -42,7 +60,7 @@ impl Line {
 
 fn parse_point(s: &str) -> Vec2 {
     let mut elements =
-        s.split(",").map(|s| s.parse::<u32>().unwrap());
+        s.split(",").map(|s| s.parse::<usize>().unwrap());
     Vec2::new(elements.next().unwrap(), elements.next().unwrap())
 }
 
