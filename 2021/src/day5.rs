@@ -23,6 +23,24 @@ impl Vec2 {
     }
 
     pub fn y_plus1(&self) -> Self { Self::new(self.x, self.y + 1) }
+
+    pub fn x_sub1_y_sub1(&self) -> Option<Self> { self.x_sub1().and_then(|c| c.y_sub1()) }
+    pub fn x_sub1_y_plus1(&self) -> Option<Self> { self.x_sub1().map(|c| c.y_plus1()) }
+    pub fn x_plus1_y_plus1(&self) -> Self { self.x_plus1().y_plus1() }
+    pub fn x_plus1_y_sub1(&self) -> Option<Self> { self.y_sub1().map(|c| c.x_plus1()) }
+
+    pub fn adjacent(&self, diagonals: bool) -> Vec<Vec2> {
+        let mut vec = vec![self.x_plus1(), self.y_plus1()];
+        if let Some(p) = self.x_sub1() { vec.push(p); }
+        if let Some(p) = self.y_sub1() { vec.push(p); }
+        if diagonals {
+            if let Some(p) = self.x_sub1_y_sub1() { vec.push(p); }
+            if let Some(p) = self.x_sub1_y_plus1() { vec.push(p); }
+            if let Some(p) = self.x_plus1_y_sub1() { vec.push(p); }
+            vec.push(self.x_plus1_y_plus1());
+        }
+        vec
+    }
 }
 impl Display for Vec2 {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
