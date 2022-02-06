@@ -27,7 +27,7 @@ mod day9;
 mod day10;
 
 fn main() {
-    day10::part1();
+    day10::part2();
 }
 
 pub fn read_lines(path: &str) -> Map<Lines<BufReader<File>>, fn(std::io::Result<String>) -> String> {
