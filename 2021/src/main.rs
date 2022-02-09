@@ -3,6 +3,7 @@
 #![feature(drain_filter)]
 #![feature(int_abs_diff)]
 #![feature(is_some_with)]
+#![feature(option_result_contains)]
 
 extern crate alloc;
 extern crate core;
@@ -29,7 +30,7 @@ mod day11;
 mod day12;
 
 fn main() {
-    day12::part1();
+    day12::part2();
 }
 
 pub fn read_lines(path: &str) -> Map<Lines<BufReader<File>>, fn(std::io::Result<String>) -> String> {
