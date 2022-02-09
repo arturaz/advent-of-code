@@ -31,6 +31,8 @@ pub struct GridMap<A> {
     pub data: Vec<Vec<A>>
 }
 impl<A> GridMap<A> {
+    pub fn new() -> Self { GridMap { data: Vec::new() } }
+
     pub fn each_coord<'a>(&'a self) -> impl Iterator<Item = Vec2> + 'a {
         (0..self.data.len()).flat_map(|x|
             (0..self.data[x].len()).map(move |y| Vec2::new(x, y))
@@ -97,6 +99,27 @@ impl<A> GridMap<A> {
 
     pub fn get_right_down(&self, c: &Vec2) -> Option<&A> {
         self.get(&c.y_plus1().x_plus1())
+    }
+}
+impl<A : Clone> GridMap<A> {
+    pub fn ensure_indexes(&mut self, c: &Vec2, default_value: &A) {
+        let ensure_row_size = |row: &mut Vec<A>| {
+            if c.y >= row.len() {
+                row.resize_with(c.y + 1, || default_value.clone());
+            }
+        };
+
+        if c.x >= self.data.len() {
+            self.data.resize_with(c.x + 1, || {
+                let mut row = Vec::<A>::new();
+                ensure_row_size(&mut row);
+                row
+            });
+        }
+
+        for row in &mut self.data {
+            ensure_row_size(row);
+        }
     }
 }
 
