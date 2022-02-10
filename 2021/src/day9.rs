@@ -125,7 +125,30 @@ impl<A : Clone> GridMap<A> {
 
 impl<A : Display> Display for GridMap<A> {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
-        for row in &self.data {
+        let rows = self.data.len();
+        let row_prec = rows.log10() as usize + 1;
+
+        if rows == 0 { return Ok(()) }
+
+        let cols = self.data[0].len();
+        let col_prec = cols.log10() as usize + 1;
+
+        let col_num_prefix = " ".repeat(row_prec + 1);
+        for prec in (0..col_prec).rev() {
+            f.write_str(&col_num_prefix)?;
+            for col in 0..cols {
+                let div = 10_usize.pow(prec as u32);
+                let col_modded = col / div % 10;
+                // f.write_fmt(format_args!(
+                //     "prec={}, div={}, col={}, col_modded={}\n", prec, div, col, col_modded
+                // ))?;
+                f.write_fmt(format_args!("{}", col_modded))?;
+            }
+            f.write_str("\n")?;
+        }
+
+        for (row_idx, row) in self.data.iter().enumerate() {
+            f.write_fmt(format_args!("{:prec$} ", row_idx, prec = row_prec))?;
             for a in row {
                 f.write_fmt(format_args!("{}", a))?;
             }

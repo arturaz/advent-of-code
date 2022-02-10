@@ -4,6 +4,7 @@
 #![feature(int_abs_diff)]
 #![feature(is_some_with)]
 #![feature(option_result_contains)]
+#![feature(int_log)]
 
 extern crate alloc;
 extern crate core;

@@ -5,7 +5,4 @@
     <cabalPath>C:\ProgramData\chocolatey\bin\cabal.exe</cabalPath>
     <stackPath>C:\Users\arturas\AppData\Roaming\local\bin\stack.exe</stackPath>
   </component>
-  <component name="ThriftCompiler">
-    <compilers />
-  </component>
 </project>
