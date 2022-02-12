@@ -7,22 +7,29 @@ use crate::read_lines;
 
 #[derive(Eq, PartialEq, Hash, Debug, Copy, Clone)]
 pub struct Vec2 { pub x: usize, pub y: usize }
+
 impl Vec2 {
     pub fn new(x: usize, y: usize) -> Self {
         Vec2 { x, y }
     }
 
+    pub fn as_tuple(&self) -> (usize, usize) { (self.x, self.y) }
+
+    pub fn add_x(&self, add: usize) -> Self { Self::new(self.x + add, self.y) }
+    pub fn add_y(&self, add: usize) -> Self { Self::new(self.x, self.y + add) }
+    pub fn add_xy(&self, add_x: usize, add_y: usize) -> Self { Self::new(self.x + add_x, self.y + add_y) }
+
     pub fn x_sub1(&self) -> Option<Self> {
         self.x.checked_sub(1).map(|x| Self::new(x, self.y))
     }
 
-    pub fn x_plus1(&self) -> Self { Self::new(self.x + 1, self.y) }
+    pub fn x_plus1(&self) -> Self { self.add_x(1) }
 
     pub fn y_sub1(&self) -> Option<Self> {
         self.y.checked_sub(1).map(|y| Self::new(self.x, y))
     }
 
-    pub fn y_plus1(&self) -> Self { Self::new(self.x, self.y + 1) }
+    pub fn y_plus1(&self) -> Self { self.add_y(1) }
 
     pub fn x_sub1_y_sub1(&self) -> Option<Self> { self.x_sub1().and_then(|c| c.y_sub1()) }
     pub fn x_sub1_y_plus1(&self) -> Option<Self> { self.x_sub1().map(|c| c.y_plus1()) }
@@ -46,6 +53,9 @@ impl Display for Vec2 {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         f.write_fmt(format_args!("({},{})", self.x, self.y))
     }
+}
+impl From<Vec2> for (usize, usize) {
+    fn from(v: Vec2) -> Self { v.as_tuple() }
 }
 
 #[derive(Debug)]
