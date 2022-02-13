@@ -57,9 +57,24 @@ fn read_counts() -> Vec<Counts> {
     counts_of(&lines)
 }
 
-fn to_u32(slice: &[u8]) -> u32 {
+pub fn bits_to_u32(slice: &[u8]) -> u32 {
     slice.iter().rev().enumerate()
         .map(|(idx, bit)| (*bit as u32) << idx)
+        .fold(0, |a, b| { a | b })
+}
+pub fn bits_bool_to_u32(slice: &[bool]) -> u32 {
+    slice.iter().rev().enumerate()
+        .map(|(idx, bit)| (if *bit { 1 } else { 0 }) << idx)
+        .fold(0, |a, b| { a | b })
+}
+pub fn bits_to_usize(slice: &[u8]) -> usize {
+    slice.iter().rev().enumerate()
+        .map(|(idx, bit)| (*bit as usize) << idx)
+        .fold(0, |a, b| { a | b })
+}
+pub fn bits_bool_to_usize(slice: &[bool]) -> usize {
+    slice.iter().rev().enumerate()
+        .map(|(idx, bit)| (if *bit { 1 } else { 0 }) << idx)
         .fold(0, |a, b| { a | b })
 }
 
@@ -67,8 +82,8 @@ pub fn part1() {
     let counts = read_counts();
     let gamma_bits = counts.iter().map(|c| c.most_common()).collect::<Vec<_>>();
     let epsilon_bits = counts.iter().map(|c| c.least_common()).collect::<Vec<_>>();
-    let gamma = to_u32(&gamma_bits);
-    let epsilon = to_u32(&epsilon_bits);
+    let gamma = bits_to_u32(&gamma_bits);
+    let epsilon = bits_to_u32(&epsilon_bits);
     let result = gamma * epsilon;
     println!("gamma_bits: {:?}", gamma_bits);
     println!("gamma: {:?}", gamma);
@@ -101,12 +116,12 @@ pub fn part2() {
     println!("oxygen");
     let oxygen_generator_rating_bits =
         filter(lines.clone(), |c| c.most_common());
-    let oxygen_generator_rating = to_u32(&oxygen_generator_rating_bits);
+    let oxygen_generator_rating = bits_to_u32(&oxygen_generator_rating_bits);
 
     println!("co2");
     let co2_scrubber_rating_bits =
         filter(lines, |c| c.least_common());
-    let co2_scrubber_rating = to_u32(&co2_scrubber_rating_bits);
+    let co2_scrubber_rating = bits_to_u32(&co2_scrubber_rating_bits);
 
     let result = oxygen_generator_rating * co2_scrubber_rating;
 

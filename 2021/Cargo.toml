@@ -13,3 +13,6 @@ phf = { version = "0.10", features = ["macros"] }
 im-rc = "15.0.0"
 ndarray = "0.15.4"
 petgraph = "0.6.0"
+hex = "0.4.3"
+bitstream-io = "1.2.0"
+textwrap = "0.14.2"
