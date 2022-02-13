@@ -6,7 +6,12 @@ use std::iter::Map;
 use crate::read_lines;
 
 #[derive(Eq, PartialEq, Hash, Debug, Copy, Clone)]
-pub struct Vec2 { pub x: usize, pub y: usize }
+pub struct Vec2 {
+    /// aka row
+    pub x: usize,
+    /// aka col
+    pub y: usize
+}
 
 impl Vec2 {
     pub fn new(x: usize, y: usize) -> Self {
