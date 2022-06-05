@@ -25,7 +25,26 @@ impl Display for Vec2Signed {
     }
 }
 
-fn read_coords() -> (Offset, Vec2Signed, Vec2Signed) {
+struct TargetArea {
+    from: Vec2Signed,
+    to: Vec2Signed
+}
+impl TargetArea {
+    fn each_coord(&self) -> impl Iterator<Item = Vec2Signed> + '_ {
+        (self.from.x..=self.to.x).flat_map(|row| {
+            (self.from.y..=self.to.y).map(move |col| {
+                Vec2Signed::new(row, col)
+            })
+        })
+    }
+}
+impl Display for TargetArea {
+    fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
+        f.write_fmt(format_args!("[from={}, to={}]", self.from, self.to))
+    }
+}
+
+fn read_coords() -> (Offset, TargetArea) {
     // target area: x=20..30, y=-10..-5
     let line = read_lines("data/day17_test.txt").next().unwrap();
     let xy = line.split_once(":").unwrap().1.trim();
@@ -45,21 +64,21 @@ fn read_coords() -> (Offset, Vec2Signed, Vec2Signed) {
 
     let from = Vec2Signed::new(row_from, col_from);
     let to = Vec2Signed::new(row_to, col_to);
+    let target_area = TargetArea { from, to };
 
-    (offset, from, to)
+    (offset, target_area)
 }
 
-fn to_grid(offset: Offset, from: &Vec2Signed, to: &Vec2Signed) -> GridMap<Tile> {
+fn to_grid(offset: Offset, target_area: &TargetArea) -> GridMap<Tile> {
     let mut map = GridMap::new_with_offset(offset);
     let submarine = Vec2Signed::new(0, 0);
     map.ensure_indexes_offset(&submarine, &Tile::Empty);
     *map.get_mut_offset(&submarine).unwrap() = Tile::Submarine;
 
-    map.ensure_indexes_offset(&to, &Tile::Empty);
-    for row in from.x..=to.x {
-        for col in from.y..=to.y {
-            *map.get_mut_offset(&Vec2Signed::new(row, col)).unwrap() = Tile::Target;
-        }
+    map.ensure_indexes_offset(&target_area.to, &Tile::Empty);
+
+    for coord in target_area.each_coord() {
+        *map.get_mut_offset(&coord).unwrap() = Tile::Target;
     }
     map
 }
@@ -78,8 +97,8 @@ impl Display for Tile {
 }
 
 pub fn part1() {
-    let (offset, from, to) = read_coords();
-    println!("{:?}, from={}, to={}", offset, from, to);
-    let map = to_grid(offset, &from, &to);
+    let (offset, target_area) = read_coords();
+    println!("{:?}, target_area={}", offset, target_area);
+    let map = to_grid(offset, &target_area);
     println!("{}", map);
 }
