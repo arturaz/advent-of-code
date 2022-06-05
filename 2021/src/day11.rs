@@ -37,7 +37,7 @@ fn read() -> GridMap<u32> {
     let data = read_lines("data/day11.txt").map(|line|
         line.chars().map(|c| c.to_digit(10).unwrap()).collect_vec()
     ).collect_vec();
-    GridMap { data }
+    GridMap::new_with_data(data)
 }
 
 pub fn part1() {

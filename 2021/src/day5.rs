@@ -15,7 +15,7 @@ pub struct Vec2 {
 
 impl Vec2 {
     pub fn new(x: usize, y: usize) -> Self {
-        Vec2 { x, y }
+        Self { x, y }
     }
 
     pub fn as_tuple(&self) -> (usize, usize) { (self.x, self.y) }

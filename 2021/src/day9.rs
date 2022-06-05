@@ -4,6 +4,7 @@ use std::collections::{HashMap, HashSet};
 use std::iter::{FlatMap, Map};
 use std::ops::{Deref, Range};
 use itertools::Itertools;
+use crate::day17::Vec2Signed;
 use crate::day5::Vec2;
 use crate::read_lines;
 
@@ -27,11 +28,33 @@ impl<A : Display> Display for Point<A> {
     }
 }
 
+#[derive(Debug, Copy, Clone, Default)]
+pub struct Offset {
+    pub x: usize,
+    pub y: usize
+}
+impl Offset {
+    pub fn contramap_row(&self, row: usize) -> i64 {
+        (row as i64) - (self.x as i64)
+    }
+
+    pub fn contramap_col(&self, col: usize) -> i64 {
+        (col as i64) - (self.y as i64)
+    }
+
+    pub fn map(&self, row: i64, col: i64) -> Vec2 {
+        Vec2::new((row + self.x as i64) as usize, (col + self.y as i64) as usize)
+    }
+}
+
 pub struct GridMap<A> {
-    pub data: Vec<Vec<A>>
+    pub data: Vec<Vec<A>>,
+    pub offset: Offset
 }
 impl<A> GridMap<A> {
-    pub fn new() -> Self { GridMap { data: Vec::new() } }
+    pub fn new() -> Self { GridMap { data: Vec::new(), offset: Offset::default() } }
+    pub fn new_with_data(data: Vec<Vec<A>>) -> Self { GridMap { data, offset: Offset::default() } }
+    pub fn new_with_offset(offset: Offset) -> Self { GridMap { data: Vec::new(), offset } }
 
     pub fn each_coord<'a>(&'a self) -> impl Iterator<Item = Vec2> + 'a {
         (0..self.data.len()).flat_map(|x|
@@ -55,6 +78,10 @@ impl<A> GridMap<A> {
         self.data.get_mut(coord.x).and_then(|row|
             row.get_mut(coord.y)
         )
+    }
+
+    pub fn get_mut_offset(&mut self, coord: &Vec2Signed) -> Option<&mut A> {
+        self.get_mut(&coord.to_vec2(&self.offset))
     }
 
     pub fn get_point(&self, coord: &Vec2) -> Option<Point<&A>> {
@@ -121,12 +148,17 @@ impl<A : Clone> GridMap<A> {
             ensure_row_size(row);
         }
     }
+
+    pub fn ensure_indexes_offset(&mut self, c: &Vec2Signed, default_value: &A) {
+        self.ensure_indexes(&c.to_vec2(&self.offset), default_value)
+    }
 }
 
 impl<A : Display> Display for GridMap<A> {
     fn fmt(&self, f: &mut Formatter<'_>) -> core::fmt::Result {
         let rows = self.data.len();
-        let row_prec = rows.log10() as usize + 1;
+        let should_invert_rows = self.offset.contramap_row(0) < 0;
+        let row_prec = rows.log10() as usize + 1 + (if should_invert_rows { 1 } else { 0 });
 
         if rows == 0 { return Ok(()) }
 
@@ -137,7 +169,8 @@ impl<A : Display> Display for GridMap<A> {
         for prec in (0..col_prec).rev() {
             f.write_str(&col_num_prefix)?;
             for col in 0..cols {
-                let div = 10_usize.pow(prec as u32);
+                let col = self.offset.contramap_col(col);
+                let div = 10_usize.pow(prec as u32) as i64;
                 let col_modded = col / div % 10;
                 // f.write_fmt(format_args!(
                 //     "prec={}, div={}, col={}, col_modded={}\n", prec, div, col, col_modded
@@ -147,7 +180,11 @@ impl<A : Display> Display for GridMap<A> {
             f.write_str("\n")?;
         }
 
-        for (row_idx, row) in self.data.iter().enumerate() {
+        let rows_iter = self.data.iter().enumerate();
+        let rows_iter: Box<dyn Iterator<Item = _>> =
+            if should_invert_rows { Box::new(rows_iter.rev()) } else { Box::new(rows_iter) };
+        for (row_idx, row) in rows_iter {
+            let row_idx = self.offset.contramap_row(row_idx);
             f.write_fmt(format_args!("{:prec$} ", row_idx, prec = row_prec))?;
             for a in row {
                 f.write_fmt(format_args!("{}", a))?;
@@ -242,7 +279,7 @@ fn read() -> HeightMap {
     let data = read_lines("data/day9.txt").map(|line|
         line.chars().map(|c| c.to_digit(10).unwrap()).collect_vec()
     ).collect_vec();
-    HeightMap { data }
+    HeightMap { data, offset: Offset::default() }
 }
 
 pub fn part1() {
