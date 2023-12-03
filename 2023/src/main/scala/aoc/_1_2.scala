@@ -10,11 +10,7 @@ def matchesAt(input: String, replacements: Vector[(String, String)], index: Int)
   }
 }
 
-/**
- * Given a string like "zoneight234" and a replacement list like [("eight", "8"), ("one", "1")] it should replace the
- * first match in the string with the replacement, in this case "z1ght234".
- */
-def replaceFirst(input: String, replacements: Vector[(String, String)]): String = {
+def buildNewWithReplacements(input: String, replacements: Vector[(String, String)]): String = {
   val current = new StringBuilder()
 
   for (index <- (0 until input.length)) {
@@ -43,7 +39,7 @@ def solution_1_2(data: Vector[String]): Unit = {
   )
 
   val processed = data.zipWithIndex.map { case (str, idx) =>
-    val replaced = replaceFirst(str, replacements)
+    val replaced = buildNewWithReplacements(str, replacements)
     println(s"#$idx: $str -> $replaced")
     replaced
   }
