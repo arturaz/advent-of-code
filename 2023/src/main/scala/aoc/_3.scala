@@ -10,19 +10,39 @@ object Solution3 {
     }
   }
 
-  case class SolutionMap(markers: Set[Coords], parts: Map[Coords, Part]) {
-    lazy val bounds: Bounds = Bounds.from(markers.iterator ++ partsExpanded.keys)
+  enum MarkerSymbol {
+    /** '*' */
+    case Gear
+    case Other
+  }
+  object MarkerSymbol {
+    def parse(c: Char): MarkerSymbol = c match {
+      case '*' => Gear
+      case _ => Other
+    }
+  }
+
+  case class SolutionMap(markers: Map[Coords, MarkerSymbol], parts: Map[Coords, Part]) {
+    lazy val bounds: Bounds = Bounds.from(markers.keysIterator ++ partsExpanded.keysIterator)
 
     lazy val partsExpanded: Map[Coords, (Coords, Part)] = parts.flatMap { case (start, part) =>
       val coords = part.allCoords(start)
       coords.map(_ -> (start, part))
     }
 
+    def adjacentParts(coord: Coords): Iterator[(Coords, Part)] = {
+      coord.aroundWithDiagonals.flatMap(partsExpanded.get).distinct
+    }
+
     def render: String = {
       bounds.coordsByLine.map { line =>
         line.map { coord =>
           partsExpanded.get(coord) match {
-            case None => if (markers.contains(coord)) 'X' else '.'
+            case None => markers.get(coord) match {
+              case Some(MarkerSymbol.Gear) => '*'
+              case Some(MarkerSymbol.Other) => 'X'
+              case None => '.'
+            }
             case Some((start, part)) => part.noStr(coord.x - start.x)
           }
         }.mkString("")
@@ -38,7 +58,7 @@ object Solution3 {
         }
 
         case class State(
-          parts: Vector[PartBuilder], currentPart: Option[PartBuilder], markers: Set[Int]
+          parts: Vector[PartBuilder], currentPart: Option[PartBuilder], markers: Map[Int, MarkerSymbol]
         ) {
           def notDigitAt(idx: Int, c: Char): State = {
             val newState = currentPart match {
@@ -47,7 +67,7 @@ object Solution3 {
             }
             c match {
               case '.' => newState
-              case _ => newState.copy(markers = newState.markers + idx)
+              case _ => newState.copy(markers = newState.markers.updated(idx, MarkerSymbol.parse(c)))
             }
           }
 
@@ -60,13 +80,13 @@ object Solution3 {
         }
 
         val state = line.iterator.zipWithIndex.foldLeft(
-          State(Vector.empty, None, Set.empty)
+          State(Vector.empty, None, Map.empty)
         ) { case (state, (c, idx)) =>
           if (c.isDigit) state.digitAt(idx, c)
           else state.notDigitAt(idx, c)
         }.notDigitAt(line.length, '.')
 
-        val markers = state.markers.map(x => Coords(x, y))
+        val markers = state.markers.map { case (x, symbol) => Coords(x, y) -> symbol }
         val parts = state.parts.map { part =>
           val start = Coords(part.startsAtIdx, y)
           start -> Part(part.no.toInt)
@@ -74,7 +94,7 @@ object Solution3 {
 
         (markers, parts)
       }
-      .foldLeft(SolutionMap(Set.empty, Map.empty)) { case (map, (markers, parts)) =>
+      .foldLeft(SolutionMap(Map.empty, Map.empty)) { case (map, (markers, parts)) =>
         map.copy(
           markers = map.markers ++ markers,
           parts = map.parts ++ parts
@@ -82,19 +102,37 @@ object Solution3 {
       }
   }
 
-  def run(data: Vector[String]): Unit = {
+  def run1(data: Vector[String]): Unit = {
     val map = parseMap(data)
     println(map.render)
 
-    val parts = map.markers.iterator.flatMap { marker =>
+    val parts = map.markers.iterator.flatMap { case (marker, _) =>
       marker.aroundWithDiagonals.flatMap(map.partsExpanded.get).distinct
     }.toVector
-//    println(parts.mkString("\n"))
     val result = parts.iterator.map(_._2.no).sum
+
+    println(result)
+  }
+
+  def run2(data: Vector[String]): Unit = {
+    val map = parseMap(data)
+
+    val result = map.markers.iterator.flatMap {
+      case (_, MarkerSymbol.Other) => None
+      case (pos, MarkerSymbol.Gear) =>
+        val adjacent = map.adjacentParts(pos).toVector
+        if (adjacent.size == 2) {
+          val (a, b) = adjacent(0) -> adjacent(1)
+          Some(a._2.no * b._2.no)
+        }
+        else None
+    }.sum
 
     println(result)
   }
 }
 
-object _3_1_Test extends Problem(3, InputMode.Test(1), Solution3.run)
-object _3_1_Normal extends Problem(3, InputMode.Normal, Solution3.run)
+object _3_1_Test extends Problem(3, InputMode.Test(1), Solution3.run1)
+object _3_1_Normal extends Problem(3, InputMode.Normal, Solution3.run1)
+object _3_2_Test extends Problem(3, InputMode.Test(1), Solution3.run2)
+object _3_2_Normal extends Problem(3, InputMode.Normal, Solution3.run2)
