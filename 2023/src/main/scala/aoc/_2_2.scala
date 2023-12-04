@@ -13,11 +13,11 @@ object Solution2_2 {
     def power: Int = red * blue * green
   }
 
-  def run(data: Vector[String]): Unit = {
+  def run(data: Vector[String]): String = {
     val result = data.iterator.map(Solution2.parseGame).map { game =>
       game.draws.foldLeft(MinCubes(0, 0, 0))((minCubes, draw) => minCubes.update(draw))
     }.map(_.power).sum
-    println(result)
+    result.toString
   }
 }
 

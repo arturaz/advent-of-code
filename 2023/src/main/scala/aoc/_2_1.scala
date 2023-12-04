@@ -32,9 +32,9 @@ object Solution2 {
     }
   }
 
-  def run(data: Vector[String]): Unit = {
+  def run(data: Vector[String]): String = {
     val result = data.iterator.map(parseGame).filter(validate).map(_.no).sum
-    println(result)
+    result.toString
   }
 }
 

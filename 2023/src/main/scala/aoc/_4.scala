@@ -27,12 +27,12 @@ object Solution4 {
     Card(id.split("\\s+")(1).toInt, winningSet, numbersVector)
   }
 
-  def run1(data: Vector[String]): Unit = {
+  def run1(data: Vector[String]): String = {
     val result = data.map(parseLine).map(_.score).sum
-    println(result)
+    result.toString
   }
 
-  def run2(data: Vector[String]): Unit = {
+  def run2Slow(data: Vector[String]): String = {
     val cards = data.iterator.map(parseLine).map(c => c.id -> c).toMap
 
     var totalCards = 0
@@ -43,22 +43,48 @@ object Solution4 {
 
       val won = card.winningNumbers.toVector
       if (won.nonEmpty) {
-//        println(s"Card ${card.id} won ${won.mkString(", ")}")
         val copied = won.map(cards)
-//        copied.foreach { card =>
-//          println(s"  $card -> ${card.winningNumbers.mkString(", ")}")
-//        }
 
         unchecked ++= copied
       }
     }
 
-    println(totalCards)
+    totalCards.toString
+  }
+
+  def run2Fast(data: Vector[String]): String = {
+    val cards = data.iterator.map(parseLine).map(c => c.id -> c).toMap
+
+    val ids = cards.keysIterator.toVector.sorted
+    case class WithCount[A](value: A, count: Int)
+
+    var totalCards = 0
+    var cardsWithCounts = cards.map { case (id, card) => id -> WithCount(card, 1) }
+    ids.foreach { id =>
+      val WithCount(card, count) = cardsWithCounts(id)
+      totalCards += count
+
+      val won = card.winningNumbers.toVector
+      if (won.nonEmpty) {
+        won.foreach { wonId =>
+          cardsWithCounts = cardsWithCounts.updatedWith(wonId) {
+            case None => ??? // should not happen
+            case Some(WithCount(card, current)) => Some(WithCount(card, current + count))
+          }
+        }
+      }
+    }
+
+    totalCards.toString
   }
 }
 
 object _4_1_Test extends Problem(4, InputMode.Test(1), Solution4.run1)
 object _4_1_Normal extends Problem(4, InputMode.Normal, Solution4.run1)
 
-object _4_2_Test extends Problem(4, InputMode.Test(1), Solution4.run2)
-object _4_2_Normal extends Problem(4, InputMode.Normal, Solution4.run2)
+val run2Fns = ToRun(
+  RunFn("slow", Solution4.run2Slow),
+  RunFn("fast", Solution4.run2Fast),
+)
+object _4_2_Test extends Problem(4, InputMode.Test(1), run2Fns)
+object _4_2_Normal extends Problem(4, InputMode.Normal, run2Fns)

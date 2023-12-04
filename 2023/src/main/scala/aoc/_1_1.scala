@@ -1,6 +1,6 @@
 package aoc
 
-def solution1(data: Vector[String]): Unit = {
+def solution1(data: Vector[String]): String = {
   val result = data.iterator.zipWithIndex.map { case (str, idx) =>
     val digits = str.filter(_.isDigit).map(_.asDigit).toArray
     val first = digits.head
@@ -10,8 +10,7 @@ def solution1(data: Vector[String]): Unit = {
     result
   }.sum
 
-  println()
-  println(result)
+  result.toString
 }
 
 object _1_1_Test extends Problem(1, InputMode.Test(1), solution1)

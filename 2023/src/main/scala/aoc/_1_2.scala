@@ -25,7 +25,7 @@ def buildNewWithReplacements(input: String, replacements: Vector[(String, String
   current.result()
 }
 
-def solution_1_2(data: Vector[String]): Unit = {
+def solution_1_2(data: Vector[String]): String = {
   val replacements = Vector(
     "three" -> "3",
     "seven" -> "7",

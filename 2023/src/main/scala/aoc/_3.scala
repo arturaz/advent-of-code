@@ -102,7 +102,7 @@ object Solution3 {
       }
   }
 
-  def run1(data: Vector[String]): Unit = {
+  def run1(data: Vector[String]): String = {
     val map = parseMap(data)
     println(map.render)
 
@@ -111,10 +111,10 @@ object Solution3 {
     }.toVector
     val result = parts.iterator.map(_._2.no).sum
 
-    println(result)
+    result.toString
   }
 
-  def run2(data: Vector[String]): Unit = {
+  def run2(data: Vector[String]): String = {
     val map = parseMap(data)
 
     val result = map.markers.iterator.flatMap {
@@ -128,7 +128,7 @@ object Solution3 {
         else None
     }.sum
 
-    println(result)
+    result.toString
   }
 }
 
