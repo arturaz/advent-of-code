@@ -1,21 +1,36 @@
 package aoc
 
+import com.google.common.collect.{ImmutableRangeMap, RangeMap}
 import com.softwaremill.quicklens.*
+import cats.syntax.all.*
+import cats.effect.syntax.all.*
+import scala.collection.parallel.CollectionConverters.*
+
+import scala.collection.immutable.NumericRange
 
 object Solution5 {
   case class MappingRange(destinationRangeStart: Long, sourceRangeStart: Long, rangeLength: Long) {
-    def destinationRangeEnd: Long = destinationRangeStart + rangeLength
-    def sourceRangeEnd: Long = sourceRangeStart + rangeLength
+    inline def destinationRangeEnd: Long = destinationRangeStart + rangeLength
+    inline def sourceRangeEnd: Long = sourceRangeStart + rangeLength
 
     override def toString =
       s"MappingRange[$sourceRangeStart..${sourceRangeEnd - 1} -> $destinationRangeStart..${destinationRangeEnd - 1}]"
 
-    def apply(index: Long): Option[Long] = {
+    inline def apply(index: Long): Option[Long] = {
       if (index >= sourceRangeStart && index < sourceRangeEnd) {
         val offset = index - sourceRangeStart
         Some(destinationRangeStart + offset)
       } else {
         None
+      }
+    }
+
+    inline def getOrThrow(index: Long): Long = {
+      if (index >= sourceRangeStart && index < sourceRangeEnd) {
+        val offset = index - sourceRangeStart
+        destinationRangeStart + offset
+      } else {
+        throw new Exception(s"Index $index is out of range $this")
       }
     }
   }
@@ -28,8 +43,19 @@ object Solution5 {
   }
 
   case class Mappings(mappings: Vector[MappingRange]) {
+    lazy val rangeMap: RangeMap[java.lang.Long, MappingRange] = {
+      val b = ImmutableRangeMap.builder[java.lang.Long, MappingRange]()
+      mappings.foreach { mapping =>
+        b.put(com.google.common.collect.Range.closedOpen(mapping.sourceRangeStart, mapping.sourceRangeEnd), mapping)
+      }
+      b.build()
+    }
+
     def apply(index: Long): Long = {
-      mappings.iterator.flatMap(_.apply(index)).nextOption().getOrElse(index)
+      rangeMap.get(index) match {
+        case null => index
+        case mapping => mapping.getOrThrow(index)
+      }
     }
 
     def :+(mapping: MappingRange): Mappings = this.modify(_.mappings).using(_ :+ mapping)
@@ -39,7 +65,7 @@ object Solution5 {
   }
 
   case class Data(
-    seeds: Set[Long],
+    seeds: Vector[NumericRange.Exclusive[Long]],
     seedToSoilMap: Mappings,
     soilToFertilizerMap: Mappings,
     fertilizerToWaterMap: Mappings,
@@ -79,13 +105,13 @@ object Solution5 {
   }
   object Data {
     def empty: Data = apply(
-      Set.empty,
+      Vector.empty,
       Mappings.empty, Mappings.empty, Mappings.empty, Mappings.empty, Mappings.empty, Mappings.empty, Mappings.empty
     )
   }
 
   enum DataParserState {
-    case Seeds
+    case Seeds(isRange: Boolean)
     case SeedToSoil
     case SoilToFertilizer
     case FertilizerToWater
@@ -99,11 +125,14 @@ object Solution5 {
       def modMappings(mappings: Mappings): Mappings = mappings :+ MappingRange.parse(line)
 
       def parseLine() = state match {
-        case DataParserState.Seeds =>
+        case DataParserState.Seeds(isRange) =>
           // seeds: 79 14 55 13
           if (line.startsWith("seeds: ")) {
-            val seeds = line.split(" ").drop(1).map(_.toLong).toSet
-            this.modify(_.data.seeds).setTo(seeds)
+            val seeds = line.split(" ").drop(1).map(_.toLong)
+            val ranges =
+              if (isRange) seeds.grouped(2).map { case Array(start, length) => start until (start + length) }
+              else seeds.iterator.map(seed => seed until (seed + 1))
+            this.modify(_.data.seeds).setTo(ranges.toVector)
           }
           else throw new Exception(s"Unexpected line: $line")
         case DataParserState.SeedToSoil => this.modify(_.data.seedToSoilMap).using(modMappings)
@@ -129,14 +158,20 @@ object Solution5 {
     }
   }
 
-  def run1(data: Vector[String]): String = {
-    val parsed = data.foldLeft(DataParser(DataParserState.Seeds, Data.empty))(_.input(_)).data
-//    println(parsed)
+  def run(data: Vector[String], isRange: Boolean): String = {
+    val parsed = data.foldLeft(DataParser(DataParserState.Seeds(isRange), Data.empty))(_.input(_)).data
+    println(parsed)
 
-    val result = parsed.seeds.iterator.map(parsed.resolveSeedLocation).min
+    val result = parsed.seeds.par.map(range => range.iterator.map(parsed.resolveSeedLocation).min).min
     result.toString
   }
+
+  def run1(data: Vector[String]): String = run(data, isRange = false)
+  def run2(data: Vector[String]): String = run(data, isRange = true)
 }
 
 object _5_1_Test extends Problem(5, InputMode.Test(1), Solution5.run1)
 object _5_1_Normal extends Problem(5, InputMode.Normal, Solution5.run1)
+
+object _5_2_Test extends Problem(5, InputMode.Test(1), Solution5.run2)
+object _5_2_Normal extends Problem(5, InputMode.Normal, Solution5.run2)
