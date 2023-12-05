@@ -9,6 +9,8 @@ import scala.collection.parallel.CollectionConverters.*
 import scala.collection.immutable.NumericRange
 
 object Solution5 {
+  case class MappingResult(value: Long, valuesTillMappingEnd: Long)
+
   case class MappingRange(destinationRangeStart: Long, sourceRangeStart: Long, rangeLength: Long) {
     inline def destinationRangeEnd: Long = destinationRangeStart + rangeLength
     inline def sourceRangeEnd: Long = sourceRangeStart + rangeLength
@@ -16,19 +18,12 @@ object Solution5 {
     override def toString =
       s"MappingRange[$sourceRangeStart..${sourceRangeEnd - 1} -> $destinationRangeStart..${destinationRangeEnd - 1}]"
 
-    inline def apply(index: Long): Option[Long] = {
+    inline def getOrThrow(index: Long): MappingResult = {
       if (index >= sourceRangeStart && index < sourceRangeEnd) {
         val offset = index - sourceRangeStart
-        Some(destinationRangeStart + offset)
-      } else {
-        None
-      }
-    }
-
-    inline def getOrThrow(index: Long): Long = {
-      if (index >= sourceRangeStart && index < sourceRangeEnd) {
-        val offset = index - sourceRangeStart
-        destinationRangeStart + offset
+        val value = destinationRangeStart + offset
+        val valuesTillMappingEnd = rangeLength - offset - 1
+        MappingResult(value, valuesTillMappingEnd)
       } else {
         throw new Exception(s"Index $index is out of range $this")
       }
@@ -51,9 +46,9 @@ object Solution5 {
       b.build()
     }
 
-    def apply(index: Long): Long = {
+    def apply(index: Long): MappingResult = {
       rangeMap.get(index) match {
-        case null => index
+        case null => MappingResult(index, 0)
         case mapping => mapping.getOrThrow(index)
       }
     }
@@ -86,21 +81,27 @@ object Solution5 {
          |  humidityToLocationMap: $humidityToLocationMap
          |]""".stripMargin
 
-    def resolveSeedLocation(seed: Long): Long = {
+    def resolveSeedLocation(seed: Long): MappingResult = {
       val soil = seedToSoilMap(seed)
-      val fertilizer = soilToFertilizerMap(soil)
-      val water = fertilizerToWaterMap(fertilizer)
-      val light = waterToLightMap(water)
-      val temperature = lightToTemperatureMap(light)
-      val humidity = temperatureToHumidityMap(temperature)
-      val location = humidityToLocationMap(humidity)
+      val fertilizer = soilToFertilizerMap(soil.value)
+      val water = fertilizerToWaterMap(fertilizer.value)
+      val light = waterToLightMap(water.value)
+      val temperature = lightToTemperatureMap(light.value)
+      val humidity = temperatureToHumidityMap(temperature.value)
+      val location = humidityToLocationMap(humidity.value)
+
+      val canBeSkipped = Array(
+        soil.valuesTillMappingEnd, fertilizer.valuesTillMappingEnd, water.valuesTillMappingEnd,
+        light.valuesTillMappingEnd, temperature.valuesTillMappingEnd, humidity.valuesTillMappingEnd,
+        location.valuesTillMappingEnd
+      ).min
 
 //      println(
 //        s"Seed $seed: soil $soil, fertilizer $fertilizer, water $water, light $light, temperature $temperature, " +
-//        s"humidity $humidity, location $location"
+//        s"humidity $humidity, location $location, canBeSkipped $canBeSkipped"
 //      )
 
-      location
+      MappingResult(location.value, canBeSkipped)
     }
   }
   object Data {
@@ -162,7 +163,17 @@ object Solution5 {
     val parsed = data.foldLeft(DataParser(DataParserState.Seeds(isRange), Data.empty))(_.input(_)).data
     println(parsed)
 
-    val result = parsed.seeds.par.map(range => range.iterator.map(parsed.resolveSeedLocation).min).min
+//    val result = parsed.seeds.par.map(range => range.iterator.map(parsed.resolveSeedLocation(_).value).min).min
+    val result = parsed.seeds.par.map { range =>
+      var current = range.start
+      var min = Long.MaxValue
+      while (current < range.end) {
+        val result = parsed.resolveSeedLocation(current)
+        min = min.min(result.value)
+        current += 1 + result.valuesTillMappingEnd
+      }
+      min
+    }.min
     result.toString
   }
 
