@@ -37,6 +37,7 @@ object Solution5 {
     }
   }
 
+  //noinspection UnstableApiUsage
   case class Mappings(mappings: Vector[MappingRange]) {
     lazy val rangeMap: RangeMap[java.lang.Long, MappingRange] = {
       val b = ImmutableRangeMap.builder[java.lang.Long, MappingRange]()
@@ -90,11 +91,10 @@ object Solution5 {
       val humidity = temperatureToHumidityMap(temperature.value)
       val location = humidityToLocationMap(humidity.value)
 
-      val canBeSkipped = Array(
-        soil.valuesTillMappingEnd, fertilizer.valuesTillMappingEnd, water.valuesTillMappingEnd,
-        light.valuesTillMappingEnd, temperature.valuesTillMappingEnd, humidity.valuesTillMappingEnd,
+      val canBeSkipped =
+        soil.valuesTillMappingEnd min fertilizer.valuesTillMappingEnd min water.valuesTillMappingEnd min
+        light.valuesTillMappingEnd min temperature.valuesTillMappingEnd min humidity.valuesTillMappingEnd min
         location.valuesTillMappingEnd
-      ).min
 
 //      println(
 //        s"Seed $seed: soil $soil, fertilizer $fertilizer, water $water, light $light, temperature $temperature, " +
