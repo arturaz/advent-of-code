@@ -68,7 +68,7 @@ object Solution4 {
       if (won.nonEmpty) {
         won.foreach { wonId =>
           cardsWithCounts = cardsWithCounts.updatedWith(wonId) {
-            case None => ??? // should not happen
+            case None => throw new IllegalStateException("should not happen")
             case Some(WithCount(card, current)) => Some(WithCount(card, current + count))
           }
         }
