@@ -1,11 +1,11 @@
 package aoc
 
-import com.google.common.collect.{ImmutableRangeMap, RangeMap}
+import com.google.common.collect.{BoundType, ImmutableRangeMap, RangeMap, Range as GRange}
 import com.softwaremill.quicklens.*
 import cats.syntax.all.*
 import cats.effect.syntax.all.*
-import scala.collection.parallel.CollectionConverters.*
 
+import scala.collection.parallel.CollectionConverters.*
 import scala.collection.immutable.NumericRange
 
 object Solution5 {
@@ -42,7 +42,7 @@ object Solution5 {
     lazy val rangeMap: RangeMap[java.lang.Long, MappingRange] = {
       val b = ImmutableRangeMap.builder[java.lang.Long, MappingRange]()
       mappings.foreach { mapping =>
-        b.put(com.google.common.collect.Range.closedOpen(mapping.sourceRangeStart, mapping.sourceRangeEnd), mapping)
+        b.put(GRange.closedOpen(mapping.sourceRangeStart, mapping.sourceRangeEnd), mapping)
       }
       b.build()
     }
