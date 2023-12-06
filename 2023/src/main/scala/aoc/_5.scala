@@ -47,9 +47,32 @@ object Solution5 {
       b.build()
     }
 
+    /**
+     * A map of unmapped zones.
+     *
+     * So if [[rangeMap]] is {[-10..10] -> v1, [20..30] -> v2} then [[unmappedMap]] is
+     * {[Long.MinValue..-11] -> v1, [11..19] -> v2}.
+     * */
+    lazy val unmappedMap: RangeMap[java.lang.Long, MappingRange] = {
+      var begin = Long.MinValue
+      val b = ImmutableRangeMap.builder[java.lang.Long, MappingRange]()
+      rangeMap.asMapOfRanges().forEach { (range, mapping) =>
+        if (range.lowerEndpoint() > begin) {
+          b.put(GRange.closedOpen(begin, range.lowerEndpoint()), mapping)
+        }
+        begin = range.upperEndpoint() + 1
+      }
+      b.build()
+    }
+
     def apply(index: Long): MappingResult = {
       rangeMap.get(index) match {
-        case null => MappingResult(index, 0)
+        case null =>
+          val toSkip = unmappedMap.get(index) match {
+            case null => Long.MaxValue
+            case mapping => mapping.sourceRangeStart - index - 1
+          }
+          MappingResult(index, toSkip)
         case mapping => mapping.getOrThrow(index)
       }
     }
