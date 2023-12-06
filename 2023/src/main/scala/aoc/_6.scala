@@ -10,8 +10,8 @@ object Solution6 {
     val a = timeRace / 2 - math.sqrt(-4 * distance + timeRace * timeRace) / 2
     val b = timeRace / 2 + math.sqrt(-4 * distance + timeRace * timeRace) / 2
 
-    println(s"$a -> ${calculate(timeRace, a)}")
-    println(s"$b -> ${calculate(timeRace, b)}")
+//    println(s"$a -> ${calculate(timeRace, a)}")
+//    println(s"$b -> ${calculate(timeRace, b)}")
 
     val ceiled = a.ceil.toLong
     val floored = b.floor.toLong
@@ -33,9 +33,9 @@ object Solution6 {
   }
 
   def run(entries: Vector[Entry]): String = {
-    println(entries)
+//    println(entries)
     val result = entries.iterator.map(e => solve(BigDecimal(e.timeRace), BigDecimal(e.distance))).toVector
-    println(result)
+//    println(result)
     result.product.toString
   }
 
@@ -54,4 +54,4 @@ object _6_1_Test extends Problem(6, InputMode.Test(1), Solution6.run1)
 object _6_1_Normal extends Problem(6, InputMode.Normal, Solution6.run1)
 
 object _6_2_Test extends Problem(6, InputMode.Test(1), Solution6.run2)
-object _6_2_Normal extends Problem(6, InputMode.Normal, Solution6.run2)
+object _6_2_Normal extends Problem(6, InputMode.Normal, Solution6.run2, 100_000)

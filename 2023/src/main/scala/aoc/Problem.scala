@@ -19,7 +19,7 @@ object ToRun {
   }
 }
 
-trait Problem(problemNo: Int, inputMode: InputMode, run: ToRun) {
+trait Problem(problemNo: Int, inputMode: InputMode, run: ToRun, runs: Int = 1) {
   def name: String = {
     val fileName = inputMode match {
       case InputMode.Test(subProblemNo) => s"${problemNo}_${subProblemNo}_test"
@@ -35,10 +35,10 @@ trait Problem(problemNo: Int, inputMode: InputMode, run: ToRun) {
     val outputs = run.functions.map { runFn =>
       println(s"Running ${runFn.name}...")
       val start = System.currentTimeMillis()
-      val result = runFn.fn(data)
+      val result = (1 to runs).map(_ => runFn.fn(data)).last
       val end = System.currentTimeMillis()
-      val time = (end - start).millis
-      val output = s"$name (${runFn.name}) done in $time: $result"
+      val time = (end - start).millis / runs
+      val output = s"$name (${runFn.name}) done in $time over $runs runs: $result"
       println(output)
       println()
       output
