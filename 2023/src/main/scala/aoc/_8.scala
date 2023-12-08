@@ -1,5 +1,7 @@
 package aoc
 
+import cats.syntax.all.*
+
 object Solution8 {
   enum Direction {
     case Left, Right
@@ -18,7 +20,14 @@ object Solution8 {
 
   case class Node(id: String) extends AnyVal {
     override def toString: String = id
+
+    def startsWithA: Boolean = id.startsWith("A")
+    def endsWithZ: Boolean = id.endsWith("Z")
   }
+  object Node {
+    given Ordering[Node] = Ordering.by(_.id)
+  }
+
   case class Entry(from: Node, left: Node, right: Node) {
     override def toString: String = s"$from = ($left, $right)"
 
@@ -42,17 +51,18 @@ object Solution8 {
 
     lazy val asMap: Map[Node, Entry] = entries.map(e => e.from -> e).toMap
 
-    def solve: Int = {
-      var current = Node("AAA")
-      var steps = 0
+    def solve(startingNode: Node, finishingCondition: Node => Boolean): LazyList[Node] = {
       val iter = directionsStream.iterator
-      while (current != Node("ZZZ")) {
-        val direction = iter.next()
-        current = asMap(current)(direction)
-        steps += 1
-      }
-
-      steps
+      LazyList.iterate(Option(startingNode)) {
+        case None => None
+        case Some(current) =>
+          if (finishingCondition(current)) None
+          else {
+            val direction = iter.next()
+            val next = asMap(current)(direction)
+            Some(next)
+          }
+      }.takeWhile(_.isDefined).map(_.get)
     }
   }
 
@@ -64,10 +74,28 @@ object Solution8 {
 
   def run1(data: Vector[String]): String = {
     val parsed = parse(data)
-    parsed.solve.toString
+
+    (parsed.solve(Node("AAA"), _ == Node("ZZZ")).size - 1).toString
+  }
+
+  def run2(data: Vector[String]): String = {
+    val parsed = parse(data)
+
+    val startingNodes = parsed.asMap.keysIterator.filter(_.id.endsWith("A")).toVector.sorted
+    println(s"STARTING NODES: ${startingNodes.mkString(", ")}")
+
+    val distances = startingNodes.map { startingNode =>
+      startingNode -> (parsed.solve(startingNode, _.endsWithZ).size - 1).toLong
+    }
+    println(distances.mkString(", "))
+
+    distances.iterator.map(_._2).reduce(lowestCommonMultiplier).toString
   }
 }
 
 object _8_1_Test1 extends Problem(8, InputMode.Test(1), Solution8.run1)
 object _8_1_Test2 extends Problem(8, InputMode.Test(2), Solution8.run1)
 object _8_1_Normal extends Problem(8, InputMode.Normal, Solution8.run1)
+
+object _8_2_Test extends Problem(8, InputMode.Test(3), Solution8.run2)
+object _8_2_Normal extends Problem(8, InputMode.Normal, Solution8.run2)

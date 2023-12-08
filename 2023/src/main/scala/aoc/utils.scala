@@ -1,6 +1,7 @@
 package aoc
 
-import scala.annotation.targetName
+import scala.annotation.{tailrec, targetName}
+import scala.collection.Factory
 
 extension [A](a: A) {
   @targetName("pipe")
@@ -13,4 +14,20 @@ def factorial(n: Long): BigInt = {
     result *= i
   }
   result
+}
+
+extension [C[X] <: collection.immutable.Seq[X], A](lists: C[LazyList[A]]) {
+  def zipTogether(implicit factory: Factory[A, C[A]]): LazyList[C[A]] = {
+    val iters = lists.map(_.iterator)
+    LazyList.continually(iters.map(_.nextOption).collect { case Some(x) => x }.to(factory)).takeWhile(_.nonEmpty)
+  }
+}
+
+@tailrec
+def greatestCommonDenominator(a: Long, b: Long): Long = {
+  if (b == 0) a else greatestCommonDenominator(b, a % b)
+}
+
+def lowestCommonMultiplier(a: Long, b: Long): Long = {
+  (a / greatestCommonDenominator(a, b)) * b
 }
