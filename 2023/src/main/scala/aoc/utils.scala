@@ -1,5 +1,7 @@
 package aoc
 
+import org.locationtech.jts.geom.{Coordinate, GeometryFactory, Polygon}
+
 import scala.annotation.{tailrec, targetName}
 import scala.collection.Factory
 
@@ -30,4 +32,11 @@ def greatestCommonDenominator(a: Long, b: Long): Long = {
 
 def lowestCommonMultiplier(a: Long, b: Long): Long = {
   (a / greatestCommonDenominator(a, b)) * b
+}
+
+extension (factory: GeometryFactory) {
+  def polygonOf(coords: Iterator[Coords]): Polygon = {
+    val jtsCoords = coords.map(_.asJTS).toArray
+    factory.createPolygon(jtsCoords)
+  }
 }

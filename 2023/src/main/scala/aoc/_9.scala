@@ -5,7 +5,10 @@ object Solution9 {
     data.map(_.split("\\s+").iterator.map(_.toLong).toVector)
 
   def diffs(data: Vector[Long]): Vector[Long] =
-    data.sliding(2).map { case Vector(a, b) => b - a }.toVector
+    data.sliding(2).map {
+      case Vector(a, b) => b - a
+      case other => throw new Exception(s"Impossible, received $other")
+    }.toVector
 
   def derive(data: Vector[Long]): Vector[Vector[Long]] = {
     val b = Vector.newBuilder[Vector[Long]]

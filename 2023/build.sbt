@@ -8,4 +8,5 @@ libraryDependencies ++= Seq(
   "org.typelevel" %% "cats-effect" % "3.5.0",
   "org.scala-lang.modules" %% "scala-parallel-collections" % "1.0.4",
   ("org.scala-graph" %% "graph-core" % "2.0.0").cross(CrossVersion.for3Use2_13),
+  "org.locationtech.jts" % "jts-core" % "1.19.0",
 )

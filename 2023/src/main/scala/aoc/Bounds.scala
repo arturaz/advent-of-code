@@ -41,7 +41,9 @@ object Bounds {
   def zero: Bounds = Bounds(0, 0, 0, 0)
 
   def from(coords: Iterator[Coords]): Bounds = {
-    coords.foldLeft(Bounds.zero)((bounds, coord) => bounds.expand(coord))
+    coords.foldLeft(
+      Bounds(Int.MaxValue, Int.MinValue, Int.MaxValue, Int.MinValue)
+    )((bounds, coord) => bounds.expand(coord))
   }
 
   def render[V : Show](map: Map[Coords, V]): String = {

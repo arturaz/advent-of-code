@@ -1,5 +1,7 @@
 package aoc
 
+import org.locationtech.jts.geom.Coordinate
+
 import scala.annotation.targetName
 
 case class Coords(x: Int, y: Int) {
@@ -26,6 +28,8 @@ case class Coords(x: Int, y: Int) {
   def around: Iterator[Coords] = Iterator(up, down, left, right)
   def diagonals: Iterator[Coords] = Iterator(up.left, up.right, down.left, down.right)
   def aroundWithDiagonals: Iterator[Coords] = around ++ diagonals
+  
+  def asJTS: Coordinate = new Coordinate(x, y)
 }
 
 case class WithCoords[A](coords: Coords, value: A) {

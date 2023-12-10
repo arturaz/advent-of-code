@@ -1,9 +1,11 @@
 package aoc
 
 import cats.Show
+import org.locationtech.jts.geom.GeometryFactory
 import scalax.collection.GraphTraversal.Visitor
 import scalax.collection.edges.*
 import scalax.collection.immutable.Graph
+import scala.collection.parallel.CollectionConverters.*
 
 object Solution10 {
   enum Pipe {
@@ -69,7 +71,7 @@ object Solution10 {
     def connectsTo(direction: Direction, spotInThatDirection: Spot): Boolean = {
       spotInThatDirection match {
         case Spot.OfPipe(pipe) => connectsTo(direction, pipe)
-        case Spot.Ground => false
+        case Spot.Ground(_) => false
         case Spot.StartingPosition => false
       }
     }
@@ -90,18 +92,23 @@ object Solution10 {
 
   enum Spot {
     case OfPipe(pipe: Pipe)
-    case Ground
+    case Ground(isInner: Boolean)
     case StartingPosition
+
+    def isInnerGround: Boolean = this match {
+      case Ground(isInner) => isInner
+      case _ => false
+    }
 
     def toChar: Char = this match {
       case Spot.OfPipe(pipe) => pipe.toChar
-      case Spot.Ground => ' '
+      case Spot.Ground(isInner) => if (isInner) '.' else ' '
       case Spot.StartingPosition => '╳'
     }
   }
   object Spot {
     def parse(c: Char): Option[Spot] = c match {
-      case '.' => Some(Ground)
+      case '.' => Some(Ground(isInner = false))
       case 'S' => Some(StartingPosition)
       case _ => Pipe.parse(c).map(OfPipe.apply)
     }
@@ -171,12 +178,52 @@ object Solution10 {
     val startingNode = graph.get(WithCoords(startingPosition, map(startingPosition)))
     val cycle = graph.findCycleContaining(startingNode)(Visitor.empty).getOrElse(throw new Exception("No cycle found"))
     val cycleMap = cycle.collect { case n: graph.InnerNode => n.outer.asTuple }.toMap
-    println(Bounds.render(cycleMap))
+    println(Bounds.render(
+      cycleMap.view.mapValues(Spot.OfPipe.apply).toMap.updated(startingPosition, Spot.StartingPosition)
+    ))
 
     (cycleMap.size / 2).toString
+  }
+
+  def run2(lines: Vector[String]): String = {
+    val (pipesMap, startingPosition) = parseFully(lines)
+
+    val graph = buildGraph(pipesMap)
+    val startingNode = graph.get(WithCoords(startingPosition, pipesMap(startingPosition)))
+    val cycle = graph.findCycleContaining(startingNode)(Visitor.empty).getOrElse(throw new Exception("No cycle found"))
+    val cyclePoints = cycle.iterator.collect { case n: graph.InnerNode => n.outer }.toVector
+    val cycleMap = cyclePoints.iterator.map(_.asTuple).toMap
+
+    println(Bounds.render(cycleMap))
+
+    val geometryFactory = new GeometryFactory()
+    val polygon = geometryFactory.polygonOf(cyclePoints.iterator.map(_.coords))
+
+    val bounds = Bounds.from(cycleMap.keysIterator)
+    val groundCoords = bounds.coords.toSet -- cycleMap.keySet
+
+    println(Bounds.render(groundCoords.iterator.map(_ -> '.').toMap))
+
+    val innerGroundCoords = groundCoords.toVector.par.filter { groundCoord =>
+      polygon.contains(geometryFactory.createPoint(groundCoord.asJTS))
+    }
+    val spotsMap = innerGroundCoords.foldLeft(
+      cycleMap.view.mapValues(Spot.OfPipe.apply).toMap.updated(startingPosition, Spot.StartingPosition)
+    )((map, groundCoord) => map.updated(groundCoord, Spot.Ground(isInner = true)))
+
+    println("-----------")
+    println(bounds.render(spotsMap))
+
+    spotsMap.count(_._2.isInnerGround).toString
   }
 }
 
 object _10_1_Test1 extends Problem(10, InputMode.Test(1), Solution10.run1)
 object _10_1_Test2 extends Problem(10, InputMode.Test(2), Solution10.run1)
 object _10_1_Normal extends Problem(10, InputMode.Normal, Solution10.run1)
+
+object _10_2_Test1 extends Problem(10, InputMode.Test(3), Solution10.run2)
+object _10_2_Test2 extends Problem(10, InputMode.Test(4), Solution10.run2)
+object _10_2_Test3 extends Problem(10, InputMode.Test(5), Solution10.run2)
+object _10_2_Test4 extends Problem(10, InputMode.Test(6), Solution10.run2)
+object _10_2_Normal extends Problem(10, InputMode.Normal, Solution10.run2)
