@@ -7,4 +7,5 @@ libraryDependencies ++= Seq(
   "com.google.guava" % "guava" % "23.0",
   "org.typelevel" %% "cats-effect" % "3.5.0",
   "org.scala-lang.modules" %% "scala-parallel-collections" % "1.0.4",
+  ("org.scala-graph" %% "graph-core" % "2.0.0").cross(CrossVersion.for3Use2_13),
 )

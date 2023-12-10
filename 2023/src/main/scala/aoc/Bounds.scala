@@ -1,5 +1,8 @@
 package aoc
 
+import cats.Show
+import cats.syntax.all.*
+
 /** All bounds are inclusive. */
 case class Bounds(minX: Int, maxX: Int, minY: Int, maxY: Int) {
   def min: Coords = Coords(minX, minY)
@@ -20,12 +23,18 @@ case class Bounds(minX: Int, maxX: Int, minY: Int, maxY: Int) {
       y <- (minY to maxY).iterator
     } yield Coords(x, y)
   }
-  
+
   /** Returns an iterator of iterators, where each inner iterator represents a line of coordinates. */
   def coordsByLine: Iterator[Iterator[Coords]] = {
     for {
       y <- (minY to maxY).iterator
     } yield (minX to maxX).iterator.map(x => Coords(x, y))
+  }
+
+  def render[V : Show](map: Map[Coords, V], emptyAs: String = " "): String = {
+    coordsByLine.map { line =>
+      line.map(map.get(_).fold(emptyAs)(_.show)).mkString
+    }.mkString("\n")
   }
 }
 object Bounds {
@@ -33,5 +42,10 @@ object Bounds {
 
   def from(coords: Iterator[Coords]): Bounds = {
     coords.foldLeft(Bounds.zero)((bounds, coord) => bounds.expand(coord))
+  }
+
+  def render[V : Show](map: Map[Coords, V]): String = {
+    val bounds = from(map.keys.iterator)
+    bounds.render(map)
   }
 }
